@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices;
+using System.Runtime.InteropServices.ComTypes;
 using System.Text;
 
 namespace BibliotecaDeClases.Huffman
@@ -32,7 +34,7 @@ namespace BibliotecaDeClases.Huffman
             return freq.CompareTo(obj2.freq);
         }
     }
-    class Huffman
+    public class Huffman
     {
         public Dictionary<byte, string> huffCod = new Dictionary<byte, string>();
         public Node root;
@@ -100,7 +102,7 @@ namespace BibliotecaDeClases.Huffman
                 PList.Add(new Node(pair.Key, pair.Value, null, null));
             }
             PList.Sort();
-            string folder = "c:\\Compressions";
+            string folder = "c:\\Compressions\\";
             DirectoryInfo directory = Directory.CreateDirectory(folder);
             string fullPath = folder + newName + ".huff";
             WriteTree(PList, fullPath);
@@ -185,8 +187,9 @@ namespace BibliotecaDeClases.Huffman
         public void WriteFile(byte[] text, string newName, string name)
         {
             //escribir archivo binario 
-            string folder = "c:\\Compressions";
+            string folder = "c:\\Compressions\\";
             string fullPath = folder + newName + ".huff";
+            string ArchivoCompresiones = folder + "DataCompress.txt";
 
             // crear el directorio
             DirectoryInfo directory = Directory.CreateDirectory(folder);
@@ -197,7 +200,6 @@ namespace BibliotecaDeClases.Huffman
                 content += huffCod[item];
             }
 
-            var cliente = new WebClient();
             byte[] compressed = ConvertToByte(content);
             using (FileStream writer = new FileStream(fullPath, FileMode.Open))
             {
@@ -207,16 +209,46 @@ namespace BibliotecaDeClases.Huffman
                     byte[] temp = { ToWrite[i] };
                     writer.Seek(0, SeekOrigin.End);
                     writer.Write(temp, 0, 1);
-                    cliente.DownloadFile(writer.ToString(), newName + ".huff");
+
                 }
             }
-
             double compressedBytes = compressed.Length;
             double originalBytes = text.Length;
             double rc = compressedBytes / originalBytes;
             double fc = originalBytes / compressedBytes;
             double percentage = rc * 100;
 
+
+
+            string[] data = new string[5];
+            data[0] = name;
+            data[1] = fullPath;
+            data[2] = rc.ToString();
+            data[3] = fc.ToString();
+            data[4] = percentage.ToString("N2") + "%";
+            string ifContent = "";
+
+            if (!File.Exists(ArchivoCompresiones))
+            {
+                using (StreamWriter writer = new StreamWriter(ArchivoCompresiones))
+                {
+                    writer.Write("");
+                }
+            }
+            using (StreamReader reader = new StreamReader(ArchivoCompresiones))
+            {
+                ifContent =  reader.ReadToEnd();
+            }
+            using (StreamWriter writer = new StreamWriter(ArchivoCompresiones))
+            {
+                writer.Write(ifContent);
+                writer.Write(data[0] + "|");
+                writer.Write(data[1] + "|");
+                writer.Write(data[2] + "|");
+                writer.Write(data[3] + "|");
+                writer.Write(data[4] + "|");
+                writer.Write("###");
+            }
         }
 
 
@@ -348,5 +380,25 @@ namespace BibliotecaDeClases.Huffman
             }
         }
 
+        public string OldName() {
+            string folder = "c:\\Compressions\\";
+            string ArchivoCompresiones = folder + "DataCompress.txt";
+            string data = "";
+            string result = "";
+
+            using (StreamReader reader = new StreamReader(ArchivoCompresiones))
+            {
+                data = reader.ReadToEnd();
+            }
+            string[] dataComplete = new string[100];
+            dataComplete = data.Split("###");
+            Array.Reverse(dataComplete);
+            string[] dataCompleteV2 = new string[100];
+            string value = String.Concat(dataComplete);
+            dataCompleteV2 = value.Split("|");
+            result = dataCompleteV2[0];
+            return result;
+        }
+        
     }
 }
